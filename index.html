@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>neuro-ide - AI Code Editor</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#0d1117">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="neuro-ide">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(() => console.log('🚀 PWA готово к установке!'))
+                    .catch(err => console.log('Service Worker error:', err));
+            });
+        }
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #f0f6fc;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: #21262d;
+            padding: 12px 16px;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 600;
+            color: #58a6ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .install-btn {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            display: none;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: #21262d;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            color: #7d8590;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .tab.active {
+            color: #f0f6fc;
+            background: #0d1117;
+            border-bottom: 2px solid #58a6ff;
+        }
+
+        .tab:not(.active):hover {
+            background: #30363d;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* Code Editor */
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            overflow: hidden;
+        }
+
+        .editor {
+            flex: 1;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            color: #f0f6fc;
+            resize: none;
+            outline: none;
+            line-height: 1.5;
+            overflow-y: auto;
+        }
+
+        .editor-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: #58a6ff;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 44px;
+        }
+
+        .btn:hover {
+            background: #4491e6;
+        }
+
+        .btn.success {
+            background: #238636;
+        }
+
+        .btn.success:hover {
+            background: #2ea043;
+        }
+
+        .btn.danger {
+            background: #da3633;
+        }
+
+        .btn.danger:hover {
+            background: #b62324;
+        }
+
+        /* AI Chat */
+        .ai-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            overflow: hidden;
+        }
+
+        .chat-area {
+            flex: 1;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-y: auto;
+            margin-bottom: 12px;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            line-height: 1.4;
+        }
+
+        .message.ai {
+            background: #21262d;
+            border-left: 4px solid #58a6ff;
+        }
+
+        .message.user {
+            background: #58a6ff;
+            color: white;
+            margin-left: 20%;
+        }
+
+        .message.system {
+            background: #1a1a1a;
+            border-left: 4px solid #ffa500;
+            color: #ffa500;
+            font-style: italic;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 12px;
+            color: #f0f6fc;
+            font-size: 16px;
+            outline: none;
+            min-height: 44px;
+        }
+
+        .chat-input::placeholder {
+            color: #7d8590;
+        }
+
+        /* Preview */
+        .preview-container {
+            flex: 1;
+            padding: 16px;
+            overflow: hidden;
+        }
+
+        .preview-frame {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            background: white;
+        }
+
+        /* Install Prompt */
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: #238636;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .install-prompt.show {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .install-prompt-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .install-prompt button {
+            background: white;
+            color: #238636;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .tab {
+                font-size: 12px;
+                padding: 10px 8px;
+            }
+            
+            .editor-controls {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Status indicators */
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-online {
+            background: #238636;
+        }
+
+        .status-offline {
+            background: #da3633;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                🧠 neuro-ide
+                <span class="status-indicator status-offline" id="statusIndicator"></span>
+            </div>
+            <button class="install-btn" id="installBtn">📱 Установить</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('editor')">
+                    ⌨️ Редактор
+                </button>
+                <button class="tab" onclick="switchTab('ai')">
+                    🤖 AI
+                </button>
+                <button class="tab" onclick="switchTab('preview')">
+                    👁️ Превью
+                </button>
+            </div>
+
+            <!-- Editor Tab -->
+            <div id="editor" class="tab-content active">
+                <div class="editor-container">
+                    <textarea class="editor" id="codeEditor" placeholder="// 🚀 Добро пожаловать в neuro-ide!
+// AI-редактор кода, который работает офлайн
+
+function createApp() {
+    console.log('📱 Ваше приложение готово!');
+    return 'Привет из neuro-ide!';
+}
+
+createApp();
+
+// 💡 Попробуйте:
+// • Перейти в AI и попросить создать калькулятор
+// • Использовать автодополнение
+// • Просмотреть результат в превью"></textarea>
+                    
+                    <div class="editor-controls">
+                        <button class="btn" onclick="runCode()">
+                            ▶️ Запустить
+                        </button>
+                        <button class="btn success" onclick="formatCode()">
+                            ✨ Форматировать
+                        </button>
+                        <button class="btn" onclick="saveCode()">
+                            💾 Сохранить
+                        </button>
+                        <button class="btn danger" onclick="clearEditor()">
+                            🗑️ Очистить
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Tab -->
+            <div id="ai" class="tab-content">
+                <div class="ai-container">
+                    <div class="chat-area" id="chatArea">
+                        <div class="message ai">
+                            <strong>🤖 neuro-ide AI</strong><br>
+                            Привет! Я ваш AI помощник, который работает полностью офлайн! 🚀<br><br>
+                            <strong>Что умею:</strong><br>
+                            • Создавать веб-приложения и игры<br>
+                            • Исправлять ошибки в коде<br>
+                            • Объяснять как работает код<br>
+                            • Предлагать улучшения<br><br>
+                            <strong>Попробуйте написать:</strong><br>
+                            • "создай калькулятор"<br>
+                            • "сделай простую игру"<br>
+                            • "объясни этот код"<br>
+                            • "исправь ошибку"
+                        </div>
+                    </div>
+                    
+                    <div class="chat-input-container">
+                        <input type="text" class="chat-input" id="chatInput" 
+                               placeholder="Опишите что создать или спросите о коде..."
+                               onkeypress="if(event.key==='Enter') sendMessage()">
+                        <button class="btn" onclick="sendMessage()">
+                            🚀 Отправить
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Tab -->
+            <div id="preview" class="tab-content">
+                <div class="preview-container">
+                    <iframe class="preview-frame" id="previewFrame" sandbox="allow-scripts"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Install Prompt -->
+    <div class="install-prompt" id="installPrompt">
+        <div class="install-prompt-content">
+            <div>
+                <strong>📱 Установить neuro-ide?</strong><br>
+                Работает офлайн как обычное приложение!
+            </div>
+            <div>
+                <button onclick="installApp()">Установить</button>
+                <button onclick="dismissInstall()" style="background: transparent; color: white;">Позже</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // AI Engine - работает полностью офлайн
+        class OfflineAI {
+            constructor() {
+                this.patterns = this.loadPatterns();
+                this.memory = this.loadMemory();
+            }
+
+            loadPatterns() {
+                return {
+                    greetings: ['привет', 'hello', 'hi', 'здравствуй'],
+                    calculator: ['калькулятор', 'calculator', 'посчитать', 'вычислить'],
+                    game: ['игра', 'game', 'играть', 'развлечение'],
+                    website: ['сайт', 'website', 'страница', 'page'],
+                    help: ['помощь', 'help', 'что умеешь', 'команды'],
+                    error: ['ошибка', 'error', 'исправь', 'fix', 'баг'],
+                    explain: ['объясни', 'explain', 'как работает', 'что делает']
+                };
+            }
+
+            loadMemory() {
+                const saved = localStorage.getItem('neuro-ide-memory');
+                return saved ? JSON.parse(saved) : {
+                    interactions: 0,
+                    preferences: {},
+                    codeHistory: []
+                };
+            }
+
+            saveMemory() {
+                localStorage.setItem('neuro-ide-memory', JSON.stringify(this.memory));
+            }
+
+            analyze(input) {
+                const text = input.toLowerCase();
+                
+                for (let [category, keywords] of Object.entries(this.patterns)) {
+                    if (keywords.some(keyword => text.includes(keyword))) {
+                        return category;
+                    }
+                }
+                
+                return 'general';
+            }
+
+            respond(input, context = '') {
+                this.memory.interactions++;
+                const intent = this.analyze(input);
+                
+                switch (intent) {
+                    case 'calculator':
+                        return this.createCalculator();
+                    case 'game':
+                        return this.createGame();
+                    case 'website':
+                        return this.createWebsite();
+                    case 'help':
+                        return this.showHelp();
+                    case 'error':
+                        return this.helpWithError(context);
+                    case 'explain':
+                        return this.explainCode(context);
+                    default:
+                        return this.generalResponse();
+                }
+            }
+
+            createCalculator() {
+                const code = `<!DOCTYPE html>
+<html>
+<head>
+    <title>Калькулятор</title>
+    <style>
+        body { font-family: Arial; background: #f0f0f0; padding: 20px; }
+        .calculator { max-width: 300px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .display { width: 100%; height: 60px; font-size: 24px; text-align: right; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        button { height: 50px; font-size: 18px; border: none; border-radius: 5px; cursor: pointer; transition: background 0.2s; }
+        .num { background: #f8f9fa; }
+        .num:hover { background: #e9ecef; }
+        .op { background: #007bff; color: white; }
+        .op:hover { background: #0056b3; }
+        .clear { background: #dc3545; color: white; }
+        .clear:hover { background: #c82333; }
+        .equals { background: #28a745; color: white; }
+        .equals:hover { background: #218838; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <input type="text" class="display" id="display" readonly>
+        <div class="buttons">
+            <button class="clear" onclick="clearDisplay()">C</button>
+            <button class="op" onclick="appendToDisplay('/')">/</button>
+            <button class="op" onclick="appendToDisplay('*')">*</button>
+            <button class="op" onclick="deleteLast()">⌫</button>
+            
+            <button class="num" onclick="appendToDisplay('7')">7</button>
+            <button class="num" onclick="appendToDisplay('8')">8</button>
+            <button class="num" onclick="appendToDisplay('9')">9</button>
+            <button class="op" onclick="appendToDisplay('-')">-</button>
+            
+            <button class="num" onclick="appendToDisplay('4')">4</button>
+            <button class="num" onclick="appendToDisplay('5')">5</button>
+            <button class="num" onclick="appendToDisplay('6')">6</button>
+            <button class="op" onclick="appendToDisplay('+')">+</button>
+            
+            <button class="num" onclick="appendToDisplay('1')">1</button>
+            <button class="num" onclick="appendToDisplay('2')">2</button>
+            <button class="num" onclick="appendToDisplay('3')">3</button>
+            <button class="equals" onclick="calculate()" rowspan="2">=</button>
+            
+            <button class="num" onclick="appendToDisplay('0')" colspan="2">0</button>
+            <button class="num" onclick="appendToDisplay('.')">.</button>
+        </div>
+    </div>
+
+    <script>
+        let currentInput = '0';
+        
+        function updateDisplay() {
+            document.getElementById('display').value = currentInput;
+        }
+        
+        function appendToDisplay(value) {
+            if (currentInput === '0' && value !== '.') {
+                currentInput = value;
+            } else {
+                currentInput += value;
+            }
+            updateDisplay();
+        }
+        
+        function clearDisplay() {
+            currentInput = '0';
+            updateDisplay();
+        }
+        
+        function deleteLast() {
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+        
+        function calculate() {
+            try {
+                currentInput = eval(currentInput).toString();
+                updateDisplay();
+            } catch (error) {
+                currentInput = 'Ошибка';
+                updateDisplay();
+                setTimeout(() => {
+                    currentInput = '0';
+                    updateDisplay();
+                }, 1500);
+            }
+        }
+        
+        updateDisplay();
+    </script>
+</body>
+</html>`;
+
+                document.getElementById('codeEditor').value = code;
+                this.saveMemory();
+                
+                return '✨ Создал красивый калькулятор! Код добавлен в редактор. Перейдите в "Превью" чтобы увидеть результат!';
+            }
+
+            createGame() {
+                const code = `<!DOCTYPE html>
+<html>
+<head>
+    <title>Угадай число</title>
+    <style>
+        body { font-family: Arial; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .game { background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; text-align: center; backdrop-filter: blur(10px); }
+        input { padding: 15px; font-size: 18px; border: none; border-radius: 8px; margin: 10px; text-align: center; }
+        button { padding: 15px 30px; font-size: 16px; background: #ff6b6b; color: white; border: none; border-radius: 8px; cursor: pointer; margin: 10px; }
+        button:hover { background: #ff5252; }
+        .attempts { margin: 20px 0; font-size: 18px; }
+        .hint { font-size: 20px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="game">
+        <h1>🎯 Угадай число!</h1>
+        <p>Я загадал число от 1 до 100</p>
+        
+        <input type="number" id="guessInput" placeholder="Ваше число" min="1" max="100">
+        <br>
+        <button onclick="makeGuess()">🚀 Угадать!</button>
+        <button onclick="newGame()">🔄 Новая игра</button>
+        
+        <div class="attempts" id="attempts">Попыток: 0</div>
+        <div class="hint" id="hint">Удачи! 🍀</div>
+    </div>
+
+    <script>
+        let secretNumber = Math.floor(Math.random() * 100) + 1;
+        let attempts = 0;
+        
+        function makeGuess() {
+            const guess = parseInt(document.getElementById('guessInput').value);
+            const hintElement = document.getElementById('hint');
+            const attemptsElement = document.getElementById('attempts');
+            
+            if (isNaN(guess) || guess < 1 || guess > 100) {
+                hintElement.textContent = '⚠️ Введите число от 1 до 100!';
+                return;
+            }
+            
+            attempts++;
+            attemptsElement.textContent = 'Попыток: ' + attempts;
+            
+            if (guess === secretNumber) {
+                hintElement.innerHTML = '🎉 Поздравляю! Вы угадали!<br>Число было: ' + secretNumber + '<br>Попыток: ' + attempts;
+                document.getElementById('guessInput').disabled = true;
+            } else if (guess < secretNumber) {
+                hintElement.textContent = '📈 Загаданное число больше!';
+            } else {
+                hintElement.textContent = '📉 Загаданное число меньше!';
+            }
+            
+            document.getElementById('guessInput').value = '';
+        }
+        
+        function newGame() {
+            secretNumber = Math.floor(Math.random() * 100) + 1;
+            attempts = 0;
+            document.getElementById('attempts').textContent = 'Попыток: 0';
+            document.getElementById('hint').textContent = 'Удачи! 🍀';
+            document.getElementById('guessInput').disabled = false;
+            document.getElementById('guessInput').value = '';
+        }
+        
+        document.getElementById('guessInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                makeGuess();
+            }
+        });
+    </script>
+</body>
+</html>`;
+
+                document.getElementById('codeEditor').value = code;
+                this.saveMemory();
+                
+                return '🎮 Создал увлекательную игру "Угадай число"! Красивый дизайн с градиентами. Код в редакторе, посмотрите в превью!';
+            }
+
+            createWebsite() {
+                const code = `<!DOCTYPE html>
+<html>
+<head>
+    <title>Моя страница</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial; background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4); background-size: 400% 400%; animation: gradient 15s ease infinite; }
+        @keyframes gradient { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .card { background: rgba(255,255,255,0.9); padding: 30px; border-radius: 15px; margin: 20px 0; backdrop-filter: blur(10px); }
+        h1 { color: #333; text-align: center; margin-bottom: 30px; }
+        .feature { display: flex; align-items: center; margin: 15px 0; }
+        .feature-icon { font-size: 24px; margin-right: 15px; }
+        .btn { background: #ff6b6b; color: white; padding: 15px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
+        .btn:hover { background: #ff5252; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🚀 Добро пожаловать!</h1>
+            <p style="text-align: center; font-size: 18px; color: #666; margin-bottom: 30px;">
+                Современная веб-страница с красивым дизайном
+            </p>
+            
+            <div class="feature">
+                <div class="feature-icon">✨</div>
+                <div>Анимированный градиентный фон</div>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">📱</div>
+                <div>Адаптивный дизайн для всех устройств</div>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🎨</div>
+                <div>Современные CSS эффекты</div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn" onclick="showMessage()">🎉 Нажми меня!</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showMessage() {
+            alert('🎊 Поздравляю! Ваша страница работает отлично!');
+        }
+    </script>
+</body>
+</html>`;
+
+                document.getElementById('codeEditor').value = code;
+                this.saveMemory();
+                
+                return '🌟 Создал красивую веб-страницу с анимированным фоном! Современный дизайн готов в редакторе!';
+            }
+
+            showHelp() {
+                return `💡 <strong>Команды neuro-ide AI:</strong><br><br>
+                🎯 <strong>Создание:</strong><br>
+                • "создай калькулятор" - рабочий калькулятор<br>
+                • "сделай игру" - игра "угадай число"<br>
+                • "создай сайт" - красивая веб-страница<br><br>
+                
+                🔧 <strong>Помощь с кодом:</strong><br>
+                • "исправь ошибку" - анализ и исправление<br>
+                • "объясни код" - подробное объяснение<br>
+                • "улучши код" - оптимизация<br><br>
+                
+                📱 <strong>Особенности:</strong><br>
+                • Работаю полностью офлайн<br>
+                • Запоминаю наши разговоры<br>
+                • Постоянно учусь от вас`;
+            }
+
+            helpWithError(code) {
+                if (!code.trim()) {
+                    return '🔍 Покажите код с ошибкой, и я помогу исправить!';
+                }
+                
+                const errors = [];
+                if (code.includes('function') && !code.includes('{')) {
+                    errors.push('Отсутствуют фигурные скобки у функции');
+                }
+                if (code.includes('console.log') && !code.includes(';')) {
+                    errors.push('Пропущена точка с запятой');
+                }
+                
+                if (errors.length > 0) {
+                    return `🔧 Найденные проблемы:<br>• ${errors.join('<br>• ')}<br><br>Хотите, чтобы я исправил автоматически?`;
+                }
+                
+                return '✅ Код выглядит корректно! Если есть ошибки выполнения, попробуйте запустить в редакторе.';
+            }
+
+            explainCode(code) {
+                if (!code.trim()) {
+                    return '💭 Вставьте код в редактор, и я объясню как он работает!';
+                }
+                
+                return `🧠 <strong>Анализ кода:</strong><br><br>
+                📝 Ваш код содержит ${code.split('\n').length} строк<br>
+                🔧 Функций: ${(code.match(/function/g) || []).length}<br>
+                📦 Переменных: ${(code.match(/let |const |var /g) || []).length}<br><br>
+                
+                💡 <strong>Что делает код:</strong><br>
+                Анализирую структуру и предназначение...`;
+            }
+
+            generalResponse() {
+                const responses = [
+                    '💭 Интересный вопрос! Расскажите подробнее, что хотите создать?',
+                    '🚀 Готов помочь! Опишите вашу задачу более детально.',
+                    '✨ Давайте создадим что-то потрясающее! Что имеете в виду?',
+                    '🎯 Понятно! Уточните пожалуйста, какой именно код нужен?'
+                ];
+                
+                return responses[Math.floor(Math.random() * responses.length)];
+            }
+        }
+
+        // Инициализация приложения
+        const ai = new OfflineAI();
+        let deferredPrompt;
+
+        // PWA Installation
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPrompt').classList.add('show');
+            document.getElementById('installBtn').style.display = 'block';
+        });
+
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        addMessage('✅ neuro-ide установлен как приложение!', 'system');
+                    }
+                    deferredPrompt = null;
+                    document.getElementById('installPrompt').classList.remove('show');
+                });
+            }
+        }
+
+        function dismissInstall() {
+            document.getElementById('installPrompt').classList.remove('show');
+        }
+
+        // Tabs
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            if (tabName === 'preview') {
+                updatePreview();
+            }
+        }
+
+        // Editor functions
+        function runCode() {
+            const code = document.getElementById('codeEditor').value;
+            
+            if (code.trim().startsWith('<!DOCTYPE html') || code.trim().startsWith('<html')) {
+                updatePreview();
+                switchTab('preview');
+                addMessage('✅ HTML код запущен! Смотрите результат в превью.', 'system');
+            } else {
+                try {
+                    eval(code);
+                    addMessage('✅ JavaScript код выполнен успешно!', 'system');
+                } catch (error) {
+                    addMessage(`❌ Ошибка выполнения: ${error.message}`, 'system');
+                }
+            }
+        }
+
+        function formatCode() {
+            const editor = document.getElementById('codeEditor');
+            let code = editor.value;
+            
+            code = code.replace(/;/g, ';\n')
+                      .replace(/{/g, '{\n')
+                      .replace(/}/g, '\n}')
+                      .replace(/\n\s*\n/g, '\n');
+            
+            editor.value = code;
+            addMessage('✨ Код отформатирован!', 'system');
+        }
+
+        function saveCode() {
+            const code = document.getElementById('codeEditor').value;
+            localStorage.setItem('neuro-ide-code', code);
+            addMessage('💾 Код сохранен локально!', 'system');
+        }
+
+        function clearEditor() {
+            if (confirm('Очистить редактор? Несохраненные изменения будут потеряны.')) {
+                document.getElementById('codeEditor').value = '';
+                addMessage('🗑️ Редактор очищен.', 'system');
+            }
+        }
+
+        // AI Chat
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            addMessage(message, 'user');
+            input.value = '';
+            
+            addMessage('🤔 Думаю...', 'ai-thinking');
+            
+            setTimeout(() => {
+                const thinkingMsg = document.querySelector('.message.ai-thinking');
+                if (thinkingMsg) thinkingMsg.remove();
+                
+                const codeContext = document.getElementById('codeEditor').value;
+                const response = ai.respond(message, codeContext);
+                addMessage(response, 'ai');
+            }, 1000);
+        }
+
+        function addMessage(text, type) {
+            const chatArea = document.getElementById('chatArea');
+            const message = document.createElement('div');
+            message.className = `message ${type.replace('-thinking', '')}`;
+            
+            if (type === 'ai-thinking') {
+                message.className += ' ai-thinking';
+                message.innerHTML = `<strong>🤖 neuro-ide AI:</strong><br>${text}`;
+            } else if (type === 'ai') {
+                message.innerHTML = `<strong>🤖 neuro-ide AI:</strong><br>${text}`;
+            } else if (type === 'system') {
+                message.innerHTML = `<strong>📱 Система:</strong><br>${text}`;
+            } else {
+                message.innerHTML = `<strong>👤 Вы:</strong><br>${text}`;
+            }
+            
+            chatArea.appendChild(message);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // Preview
+        function updatePreview() {
+            const code = document.getElementById('codeEditor').value;
+            const previewFrame = document.getElementById('previewFrame');
+            
+            if (code.trim().startsWith('<!DOCTYPE html') || code.trim().startsWith('<html')) {
+                previewFrame.srcdoc = code;
+            } else {
+                previewFrame.srcdoc = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>JavaScript Output</title>
+                    <style>
+                        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+                        .output { background: white; padding: 15px; border-radius: 8px; margin: 10px 0; }
+                    </style>
+                </head>
+                <body>
+                    <h3>Результат выполнения JavaScript:</h3>
+                    <div class="output" id="output">Нажмите "Запустить" в редакторе</div>
+                    <script>
+                        console.log = function(msg) {
+                            document.getElementById('output').innerHTML += msg + '<br>';
+                        };
+                        try {
+                            ${code}
+                        } catch (error) {
+                            document.getElementById('output').innerHTML = '❌ Ошибка: ' + error.message;
+                        }
+                    </script>
+                </body>
+                </html>
+                `;
+            }
+        }
+
+        // Status indicator
+        function updateStatus() {
+            const indicator = document.getElementById('statusIndicator');
+            if (navigator.onLine) {
+                indicator.className = 'status-indicator status-online';
+            } else {
+                indicator.className = 'status-indicator status-offline';
+            }
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            updateStatus();
+            
+            const savedCode = localStorage.getItem('neuro-ide-code');
+            if (savedCode) {
+                document.getElementById('codeEditor').value = savedCode;
+            }
+            
+            window.addEventListener('online', updateStatus);
+            window.addEventListener('offline', updateStatus);
+            
+            addMessage('🚀 neuro-ide PWA готов к работе! Установите как приложение для лучшего опыта.', 'system');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "neuro-ide - AI Code Editor",
+  "short_name": "neuro-ide",
+  "description": "AI-powered code editor that works offline",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjQiIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPgo8Y2lyY2xlIGN4PSI1MTIiIGN5PSI1MTIiIHI9IjIyMCIgZmlsbD0iIzU4YTZmZiIvPgo8cmVjdCB4PSIyMzAiIHk9IjIzMCIgd2lkdGg9IjU2NCIgaGVpZ2h0PSI1NjQiIGZpbGw9IiMyMTI2MmQiLz4KPHR4dCB4PSI1MTIiIHk9IjYxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2YwZjZmYyIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSI0OCI+TkVVUk8tSURFPC90eHQ+Cjwvc3ZnPgo=",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "orientation": "portrait",
+  "lang": "ru"
+}
