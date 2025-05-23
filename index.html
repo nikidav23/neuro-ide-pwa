@@ -19,7 +19,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
-                    .then(() => console.log('🚀 PWA готово к установке!'))
+                    .then(() => console.log('PWA готово к установке!'))
                     .catch(err => console.log('Service Worker error:', err));
             });
         }
@@ -49,7 +49,6 @@
             height: 100vh;
         }
 
-        /* Header */
         .header {
             background: #21262d;
             padding: 12px 16px;
@@ -80,7 +79,6 @@
             display: none;
         }
 
-        /* Main Content */
         .main-content {
             flex: 1;
             display: flex;
@@ -88,7 +86,6 @@
             overflow: hidden;
         }
 
-        /* Tabs */
         .tabs {
             display: flex;
             background: #21262d;
@@ -121,7 +118,6 @@
             background: #30363d;
         }
 
-        /* Tab Content */
         .tab-content {
             flex: 1;
             display: none;
@@ -133,7 +129,6 @@
             display: flex;
         }
 
-        /* Code Editor */
         .editor-container {
             flex: 1;
             display: flex;
@@ -199,7 +194,6 @@
             background: #b62324;
         }
 
-        /* AI Chat */
         .ai-container {
             flex: 1;
             display: flex;
@@ -264,7 +258,6 @@
             color: #7d8590;
         }
 
-        /* Preview */
         .preview-container {
             flex: 1;
             padding: 16px;
@@ -279,7 +272,6 @@
             background: white;
         }
 
-        /* Install Prompt */
         .install-prompt {
             position: fixed;
             bottom: 20px;
@@ -320,7 +312,6 @@
             font-weight: 600;
         }
 
-        /* Mobile Responsive */
         @media (max-width: 768px) {
             .tab {
                 font-size: 12px;
@@ -337,7 +328,6 @@
             }
         }
 
-        /* Status indicators */
         .status-indicator {
             display: inline-block;
             width: 8px;
@@ -357,7 +347,6 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Header -->
         <div class="header">
             <div class="logo">
                 🧠 neuro-ide
@@ -366,9 +355,7 @@
             <button class="install-btn" id="installBtn">📱 Установить</button>
         </div>
 
-        <!-- Main Content -->
         <div class="main-content">
-            <!-- Tabs -->
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('editor')">
                     ⌨️ Редактор
@@ -381,7 +368,6 @@
                 </button>
             </div>
 
-            <!-- Editor Tab -->
             <div id="editor" class="tab-content active">
                 <div class="editor-container">
                     <textarea class="editor" id="codeEditor" placeholder="// 🚀 Добро пожаловать в neuro-ide!
@@ -416,7 +402,6 @@ createApp();
                 </div>
             </div>
 
-            <!-- AI Tab -->
             <div id="ai" class="tab-content">
                 <div class="ai-container">
                     <div class="chat-area" id="chatArea">
@@ -447,7 +432,6 @@ createApp();
                 </div>
             </div>
 
-            <!-- Preview Tab -->
             <div id="preview" class="tab-content">
                 <div class="preview-container">
                     <iframe class="preview-frame" id="previewFrame" sandbox="allow-scripts"></iframe>
@@ -456,7 +440,6 @@ createApp();
         </div>
     </div>
 
-    <!-- Install Prompt -->
     <div class="install-prompt" id="installPrompt">
         <div class="install-prompt-content">
             <div>
@@ -471,15 +454,9 @@ createApp();
     </div>
 
     <script>
-        // AI Engine - работает полностью офлайн
         class OfflineAI {
             constructor() {
-                this.patterns = this.loadPatterns();
-                this.memory = this.loadMemory();
-            }
-
-            loadPatterns() {
-                return {
+                this.patterns = {
                     greetings: ['привет', 'hello', 'hi', 'здравствуй'],
                     calculator: ['калькулятор', 'calculator', 'посчитать', 'вычислить'],
                     game: ['игра', 'game', 'играть', 'развлечение'],
@@ -488,6 +465,7 @@ createApp();
                     error: ['ошибка', 'error', 'исправь', 'fix', 'баг'],
                     explain: ['объясни', 'explain', 'как работает', 'что делает']
                 };
+                this.memory = this.loadMemory();
             }
 
             loadMemory() {
@@ -566,57 +544,36 @@ createApp();
             <button class="op" onclick="appendToDisplay('/')">/</button>
             <button class="op" onclick="appendToDisplay('*')">*</button>
             <button class="op" onclick="deleteLast()">⌫</button>
-            
             <button class="num" onclick="appendToDisplay('7')">7</button>
             <button class="num" onclick="appendToDisplay('8')">8</button>
             <button class="num" onclick="appendToDisplay('9')">9</button>
             <button class="op" onclick="appendToDisplay('-')">-</button>
-            
             <button class="num" onclick="appendToDisplay('4')">4</button>
             <button class="num" onclick="appendToDisplay('5')">5</button>
             <button class="num" onclick="appendToDisplay('6')">6</button>
             <button class="op" onclick="appendToDisplay('+')">+</button>
-            
             <button class="num" onclick="appendToDisplay('1')">1</button>
             <button class="num" onclick="appendToDisplay('2')">2</button>
             <button class="num" onclick="appendToDisplay('3')">3</button>
             <button class="equals" onclick="calculate()" rowspan="2">=</button>
-            
             <button class="num" onclick="appendToDisplay('0')" colspan="2">0</button>
             <button class="num" onclick="appendToDisplay('.')">.</button>
         </div>
     </div>
-
     <script>
         let currentInput = '0';
-        
-        function updateDisplay() {
-            document.getElementById('display').value = currentInput;
-        }
-        
+        function updateDisplay() { document.getElementById('display').value = currentInput; }
         function appendToDisplay(value) {
-            if (currentInput === '0' && value !== '.') {
-                currentInput = value;
-            } else {
-                currentInput += value;
-            }
+            if (currentInput === '0' && value !== '.') { currentInput = value; }
+            else { currentInput += value; }
             updateDisplay();
         }
-        
-        function clearDisplay() {
-            currentInput = '0';
-            updateDisplay();
-        }
-        
+        function clearDisplay() { currentInput = '0'; updateDisplay(); }
         function deleteLast() {
-            if (currentInput.length > 1) {
-                currentInput = currentInput.slice(0, -1);
-            } else {
-                currentInput = '0';
-            }
+            if (currentInput.length > 1) { currentInput = currentInput.slice(0, -1); }
+            else { currentInput = '0'; }
             updateDisplay();
         }
-        
         function calculate() {
             try {
                 currentInput = eval(currentInput).toString();
@@ -624,13 +581,9 @@ createApp();
             } catch (error) {
                 currentInput = 'Ошибка';
                 updateDisplay();
-                setTimeout(() => {
-                    currentInput = '0';
-                    updateDisplay();
-                }, 1500);
+                setTimeout(() => { currentInput = '0'; updateDisplay(); }, 1500);
             }
         }
-        
         updateDisplay();
     </script>
 </body>
@@ -638,7 +591,6 @@ createApp();
 
                 document.getElementById('codeEditor').value = code;
                 this.saveMemory();
-                
                 return '✨ Создал красивый калькулятор! Код добавлен в редактор. Перейдите в "Превью" чтобы увидеть результат!';
             }
 
@@ -661,33 +613,26 @@ createApp();
     <div class="game">
         <h1>🎯 Угадай число!</h1>
         <p>Я загадал число от 1 до 100</p>
-        
         <input type="number" id="guessInput" placeholder="Ваше число" min="1" max="100">
         <br>
         <button onclick="makeGuess()">🚀 Угадать!</button>
         <button onclick="newGame()">🔄 Новая игра</button>
-        
         <div class="attempts" id="attempts">Попыток: 0</div>
         <div class="hint" id="hint">Удачи! 🍀</div>
     </div>
-
     <script>
         let secretNumber = Math.floor(Math.random() * 100) + 1;
         let attempts = 0;
-        
         function makeGuess() {
             const guess = parseInt(document.getElementById('guessInput').value);
             const hintElement = document.getElementById('hint');
             const attemptsElement = document.getElementById('attempts');
-            
             if (isNaN(guess) || guess < 1 || guess > 100) {
                 hintElement.textContent = '⚠️ Введите число от 1 до 100!';
                 return;
             }
-            
             attempts++;
             attemptsElement.textContent = 'Попыток: ' + attempts;
-            
             if (guess === secretNumber) {
                 hintElement.innerHTML = '🎉 Поздравляю! Вы угадали!<br>Число было: ' + secretNumber + '<br>Попыток: ' + attempts;
                 document.getElementById('guessInput').disabled = true;
@@ -696,10 +641,8 @@ createApp();
             } else {
                 hintElement.textContent = '📉 Загаданное число меньше!';
             }
-            
             document.getElementById('guessInput').value = '';
         }
-        
         function newGame() {
             secretNumber = Math.floor(Math.random() * 100) + 1;
             attempts = 0;
@@ -708,11 +651,8 @@ createApp();
             document.getElementById('guessInput').disabled = false;
             document.getElementById('guessInput').value = '';
         }
-        
         document.getElementById('guessInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                makeGuess();
-            }
+            if (e.key === 'Enter') { makeGuess(); }
         });
     </script>
 </body>
@@ -720,7 +660,6 @@ createApp();
 
                 document.getElementById('codeEditor').value = code;
                 this.saveMemory();
-                
                 return '🎮 Создал увлекательную игру "Угадай число"! Красивый дизайн с градиентами. Код в редакторе, посмотрите в превью!';
             }
 
@@ -746,42 +685,23 @@ createApp();
     <div class="container">
         <div class="card">
             <h1>🚀 Добро пожаловать!</h1>
-            <p style="text-align: center; font-size: 18px; color: #666; margin-bottom: 30px;">
-                Современная веб-страница с красивым дизайном
-            </p>
-            
-            <div class="feature">
-                <div class="feature-icon">✨</div>
-                <div>Анимированный градиентный фон</div>
-            </div>
-            
-            <div class="feature">
-                <div class="feature-icon">📱</div>
-                <div>Адаптивный дизайн для всех устройств</div>
-            </div>
-            
-            <div class="feature">
-                <div class="feature-icon">🎨</div>
-                <div>Современные CSS эффекты</div>
-            </div>
-            
+            <p style="text-align: center; font-size: 18px; color: #666; margin-bottom: 30px;">Современная веб-страница с красивым дизайном</p>
+            <div class="feature"><div class="feature-icon">✨</div><div>Анимированный градиентный фон</div></div>
+            <div class="feature"><div class="feature-icon">📱</div><div>Адаптивный дизайн для всех устройств</div></div>
+            <div class="feature"><div class="feature-icon">🎨</div><div>Современные CSS эффекты</div></div>
             <div style="text-align: center; margin-top: 30px;">
                 <button class="btn" onclick="showMessage()">🎉 Нажми меня!</button>
             </div>
         </div>
     </div>
-
     <script>
-        function showMessage() {
-            alert('🎊 Поздравляю! Ваша страница работает отлично!');
-        }
+        function showMessage() { alert('🎊 Поздравляю! Ваша страница работает отлично!'); }
     </script>
 </body>
 </html>`;
 
                 document.getElementById('codeEditor').value = code;
                 this.saveMemory();
-                
                 return '🌟 Создал красивую веб-страницу с анимированным фоном! Современный дизайн готов в редакторе!';
             }
 
@@ -791,12 +711,10 @@ createApp();
                 • "создай калькулятор" - рабочий калькулятор<br>
                 • "сделай игру" - игра "угадай число"<br>
                 • "создай сайт" - красивая веб-страница<br><br>
-                
                 🔧 <strong>Помощь с кодом:</strong><br>
                 • "исправь ошибку" - анализ и исправление<br>
                 • "объясни код" - подробное объяснение<br>
                 • "улучши код" - оптимизация<br><br>
-                
                 📱 <strong>Особенности:</strong><br>
                 • Работаю полностью офлайн<br>
                 • Запоминаю наши разговоры<br>
@@ -807,19 +725,6 @@ createApp();
                 if (!code.trim()) {
                     return '🔍 Покажите код с ошибкой, и я помогу исправить!';
                 }
-                
-                const errors = [];
-                if (code.includes('function') && !code.includes('{')) {
-                    errors.push('Отсутствуют фигурные скобки у функции');
-                }
-                if (code.includes('console.log') && !code.includes(';')) {
-                    errors.push('Пропущена точка с запятой');
-                }
-                
-                if (errors.length > 0) {
-                    return `🔧 Найденные проблемы:<br>• ${errors.join('<br>• ')}<br><br>Хотите, чтобы я исправил автоматически?`;
-                }
-                
                 return '✅ Код выглядит корректно! Если есть ошибки выполнения, попробуйте запустить в редакторе.';
             }
 
@@ -827,33 +732,22 @@ createApp();
                 if (!code.trim()) {
                     return '💭 Вставьте код в редактор, и я объясню как он работает!';
                 }
-                
-                return `🧠 <strong>Анализ кода:</strong><br><br>
-                📝 Ваш код содержит ${code.split('\n').length} строк<br>
-                🔧 Функций: ${(code.match(/function/g) || []).length}<br>
-                📦 Переменных: ${(code.match(/let |const |var /g) || []).length}<br><br>
-                
-                💡 <strong>Что делает код:</strong><br>
-                Анализирую структуру и предназначение...`;
+                return `🧠 <strong>Анализ кода:</strong><br><br>📝 Ваш код содержит ${code.split('\n').length} строк<br>🔧 Функций: ${(code.match(/function/g) || []).length}<br>📦 Переменных: ${(code.match(/let |const |var /g) || []).length}`;
             }
 
             generalResponse() {
                 const responses = [
                     '💭 Интересный вопрос! Расскажите подробнее, что хотите создать?',
                     '🚀 Готов помочь! Опишите вашу задачу более детально.',
-                    '✨ Давайте создадим что-то потрясающее! Что имеете в виду?',
-                    '🎯 Понятно! Уточните пожалуйста, какой именно код нужен?'
+                    '✨ Давайте создадим что-то потрясающее! Что имеете в виду?'
                 ];
-                
                 return responses[Math.floor(Math.random() * responses.length)];
             }
         }
 
-        // Инициализация приложения
         const ai = new OfflineAI();
         let deferredPrompt;
 
-        // PWA Installation
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
@@ -878,7 +772,6 @@ createApp();
             document.getElementById('installPrompt').classList.remove('show');
         }
 
-        // Tabs
         function switchTab(tabName) {
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -891,7 +784,6 @@ createApp();
             }
         }
 
-        // Editor functions
         function runCode() {
             const code = document.getElementById('codeEditor').value;
             
@@ -912,12 +804,7 @@ createApp();
         function formatCode() {
             const editor = document.getElementById('codeEditor');
             let code = editor.value;
-            
-            code = code.replace(/;/g, ';\n')
-                      .replace(/{/g, '{\n')
-                      .replace(/}/g, '\n}')
-                      .replace(/\n\s*\n/g, '\n');
-            
+            code = code.replace(/;/g, ';\n').replace(/{/g, '{\n').replace(/}/g, '\n}').replace(/\n\s*\n/g, '\n');
             editor.value = code;
             addMessage('✨ Код отформатирован!', 'system');
         }
@@ -935,7 +822,6 @@ createApp();
             }
         }
 
-        // AI Chat
         function sendMessage() {
             const input = document.getElementById('chatInput');
             const message = input.value.trim();
@@ -977,7 +863,6 @@ createApp();
             chatArea.scrollTop = chatArea.scrollHeight;
         }
 
-        // Preview
         function updatePreview() {
             const code = document.getElementById('codeEditor').value;
             const previewFrame = document.getElementById('previewFrame');
@@ -985,36 +870,10 @@ createApp();
             if (code.trim().startsWith('<!DOCTYPE html') || code.trim().startsWith('<html')) {
                 previewFrame.srcdoc = code;
             } else {
-                previewFrame.srcdoc = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>JavaScript Output</title>
-                    <style>
-                        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
-                        .output { background: white; padding: 15px; border-radius: 8px; margin: 10px 0; }
-                    </style>
-                </head>
-                <body>
-                    <h3>Результат выполнения JavaScript:</h3>
-                    <div class="output" id="output">Нажмите "Запустить" в редакторе</div>
-                    <script>
-                        console.log = function(msg) {
-                            document.getElementById('output').innerHTML += msg + '<br>';
-                        };
-                        try {
-                            ${code}
-                        } catch (error) {
-                            document.getElementById('output').innerHTML = '❌ Ошибка: ' + error.message;
-                        }
-                    </script>
-                </body>
-                </html>
-                `;
+                previewFrame.srcdoc = `<!DOCTYPE html><html><head><title>JavaScript Output</title><style>body { font-family: Arial; padding: 20px; background: #f5f5f5; } .output { background: white; padding: 15px; border-radius: 8px; margin: 10px 0; }</style></head><body><h3>Результат выполнения JavaScript:</h3><div class="output" id="output">Нажмите "Запустить" в редакторе</div><script>console.log = function(msg) { document.getElementById('output').innerHTML += msg + '<br>'; }; try { ${code} } catch (error) { document.getElementById('output').innerHTML = '❌ Ошибка: ' + error.message; }</script></body></html>`;
             }
         }
 
-        // Status indicator
         function updateStatus() {
             const indicator = document.getElementById('statusIndicator');
             if (navigator.onLine) {
@@ -1024,7 +883,6 @@ createApp();
             }
         }
 
-        // Initialize
         window.addEventListener('load', () => {
             updateStatus();
             
